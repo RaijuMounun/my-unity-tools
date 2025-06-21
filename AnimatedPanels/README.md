@@ -1,25 +1,24 @@
-# AnimatedPanels - Generic Panel Navigation System
+# AnimatedPanels - Panel Geçiş Sistemi
 
-Bu sistem, Unity'de çoklu panel geçişleri için generic ve yeniden kullanılabilir bir çözüm sunar. DOTween ile smooth animasyonlar sağlar.
+Bu sistem, Unity'de çoklu panel geçişleri için generic ve yeniden kullanılabilir bir araçtır. DOTween ile paneller arası yumuşak animasyonlu geçişler sağlar.
 
-## 🚀 Özellikler
+## Özellikler
 
-- ✅ **Generic Yapı**: Herhangi bir UI projesinde kullanılabilir
-- ✅ **Event-Driven**: UnityEvent sistemi ile esnek entegrasyon
-- ✅ **Smooth Animasyonlar**: DOTween ile profesyonel geçişler
-- ✅ **Loop Navigation**: İsteğe bağlı döngüsel navigasyon
-- ✅ **Direct Navigation**: Belirli panele direkt geçiş
-- ✅ **Progress Tracking**: Panel durumu takibi
-- ✅ **Debug Tools**: Context menu ile test araçları
+- **Generic Yapı**: Herhangi bir UI projesinde kullanılabilir
+- **Event Uyumlu**: UnityEvent sistemi ile esnek entegrasyon
+- **Yumuşak Animasyonlar**: DOTween ile profesyonel geçişler
+- **Loop Navigation**: İsteğe bağlı döngüsel navigasyon
+- **Direct Navigation**: Belirli panele direkt geçiş
+- **Progress İzleme**: Panel durumu takibi
 
-## 📋 Kurulum
+## Kurulum
 
 ### 1. Script Ekleme
 
 ```csharp
 using CharacterCreation;
 
-public class YourScript : MonoBehaviour
+public class Script : MonoBehaviour
 {
     [SerializeField] private AnimatedPanels panelController;
 }
@@ -30,10 +29,10 @@ public class YourScript : MonoBehaviour
 - **Panels**: RectTransform array'ine panellerinizi sürükleyin
 - **Transition Duration**: Animasyon süresi (varsayılan: 0.5f)
 - **Transition Ease**: Animasyon eğrisi (varsayılan: InOutSine)
-- **Loop Navigation**: Son panelden sonra ilk panele dönüş
+- **Loop Navigation**: Son panelden sonra ilk panele dönülsün mü?
 - **Allow Back On First Panel**: İlk panelde geri tuşu çalışsın mı?
 
-## 🎯 Temel Kullanım
+## Temel Kullanım
 
 ### Basit Navigasyon
 
@@ -70,7 +69,7 @@ panelController.onNextRequested.AddListener(() => {
 });
 ```
 
-## 📊 Properties
+## Property'ler
 
 ```csharp
 int currentIndex = panelController.CurrentIndex;        // Mevcut panel
@@ -80,7 +79,7 @@ bool isFirst = panelController.IsOnFirstPanel;         // İlk panelde mi?
 bool isLast = panelController.IsOnLastPanel;           // Son panelde mi?
 ```
 
-## 🎨 Event Listesi
+## Event Listesi
 
 | Event                  | Açıklama                                   | Parametre        |
 | ---------------------- | ------------------------------------------ | ---------------- |
@@ -92,7 +91,7 @@ bool isLast = panelController.IsOnLastPanel;           // Son panelde mi?
 | `onTransitionStart`    | Animasyon başladığında                     | -                |
 | `onTransitionComplete` | Animasyon bittiğinde                       | -                |
 
-## 🔧 Gelişmiş Kullanım
+## Gelişmiş Kullanım
 
 ### Buton Durumu Yönetimi
 
@@ -126,7 +125,7 @@ panelController.onTransitionComplete.AddListener(() => {
 });
 ```
 
-## 🎮 Örnek Senaryolar
+## Örnek Senaryolar
 
 ### Karakter Oluşturma
 
@@ -157,7 +156,7 @@ panelController.onPanelChanged.AddListener((index) => {
 });
 ```
 
-## 🐛 Debug Araçları
+## Debug Araçları
 
 Inspector'da sağ tık → Context Menu:
 
@@ -165,14 +164,14 @@ Inspector'da sağ tık → Context Menu:
 - **Go Next**: Test için ileri git
 - **Go Back**: Test için geri git
 
-## 📝 Notlar
+## Notlar
 
 - Panellerin `RectTransform` bileşeni olmalı
 - Panel genişlikleri eşit olmalı (farklıysa animasyon bozulabilir)
 - Event'ler null-safe, boş bırakılabilir
 - Namespace `CharacterCreation` kullanılıyor
 
-## 🔄 Yeniden Kullanım
+## Yeniden Kullanım
 
 Bu sistemi başka projelerde kullanmak için:
 

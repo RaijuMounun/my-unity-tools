@@ -1,0 +1,151 @@
+// Unity AssetStore'a girip, sadece ücretsiz assetler'i göster ve sahip olunanları gizle tuşlarına basıp, tüm kategorileri seçip, f12 ile tarayıcı konsolunu açın ve tamamını yapıştırın.
+(async function() {
+
+    // --- CONFIGURATION ---
+    const CONFIG = {
+        batchSize: 5, 
+        delayBetweenBatches: 500,
+        selectors: {
+            productCard: 'div[class*="_3YDeD"]', 
+            nextButton: 'button[label="Next"]:not(:disabled)'
+        },
+        api: {
+            endpoint: "https://assetstore.unity.com/api/graphql",
+            operationName: "AddToDownload"
+        }
+    };
+
+    // --- UTILS ---
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    };
+
+    // --- CLIENT LAYER ---
+    async function claimAsset(id) {
+        const query = `
+        mutation AddToDownload($id: String!) {
+          addToDownload(id: $id) {
+            id
+            userOverview { lastDownloadAt: last_downloaded_at }
+            userEntitlement { id }
+          }
+        }`;
+
+        try {
+            const response = await fetch(CONFIG.api.endpoint, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                    "x-csrf-token": getCookie('_csrf'),
+                    "x-requested-with": "XMLHttpRequest",
+                    "x-source": "storefront"
+                },
+                body: JSON.stringify({
+                    operationName: CONFIG.api.operationName,
+                    query: query,
+                    variables: { id: id }
+                })
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return { id, status: 'SUCCESS' };
+
+        } catch (error) {
+            console.warn(`[FAIL] Asset ID: ${id} - ${error.message}`);
+            return { id, status: 'ERROR', error };
+        }
+    }
+
+    // --- SCRAPER LAYER ---
+    function extractProductsFromPage() {
+        const elements = Array.from(document.querySelectorAll(CONFIG.selectors.productCard));
+        return elements
+            .filter(el => el.innerText.includes('FREE') && el.innerText.includes('Add to My Assets'))
+            .map(el => {
+                try {
+                    const links = el.querySelectorAll("a");
+                    if (links.length < 2) return null; 
+                    
+                    const hrefParts = links[1].href.split("-");
+                    const id = hrefParts[hrefParts.length - 1];
+                    const titleEl = el.querySelector('div[data-test="package-title"]');
+                    const name = titleEl ? titleEl.innerText : 'Unknown Asset';
+                    
+                    return { id, name };
+                } catch (e) {
+                    return null;
+                }
+            })
+            .filter(item => item !== null);
+    }
+
+    function goToNextPage() {
+        const btn = document.querySelector(CONFIG.selectors.nextButton);
+        if (btn) {
+            btn.click();
+            return true;
+        }
+        return false;
+    }
+
+    // --- CONTROLLER LAYER ---
+    async function processBatch(products) {
+        for (let i = 0; i < products.length; i += CONFIG.batchSize) {
+            const chunk = products.slice(i, i + CONFIG.batchSize);
+            
+            console.log(`[BATCH] Processing items ${i + 1} to ${i + chunk.length}...`);
+            
+            const results = await Promise.all(chunk.map(p => claimAsset(p.id)));
+            
+            results.forEach((res, idx) => {
+                const product = chunk[idx];
+                if (res.status === 'SUCCESS') {
+                    console.log(`[CLAIMED] ${product.name} (${product.id})`);
+                }
+            });
+
+            if (i + CONFIG.batchSize < products.length) {
+                await sleep(CONFIG.delayBetweenBatches);
+            }
+        }
+    }
+
+    // --- MAIN ---
+    console.log("Asset Claimer Started...");
+    
+    let hasNextPage = true;
+    let pageCount = 1;
+
+    while (hasNextPage) {
+        console.log(`\n--- PAGE ${pageCount} ---`);
+        
+        let retries = 0;
+        while (document.querySelectorAll(CONFIG.selectors.productCard).length === 0 && retries < 20) {
+            await sleep(500);
+            retries++;
+        }
+
+        const products = extractProductsFromPage();
+        console.log(`[INFO] Found ${products.length} claimable assets on this page.`);
+
+        if (products.length > 0) {
+            await processBatch(products);
+        }
+
+        console.log("[INFO] Attempting to go to next page...");
+        hasNextPage = goToNextPage();
+        
+        if (hasNextPage) {
+            pageCount++;
+            await sleep(3000);
+        } else {
+            console.log("🏁 Job done.");
+        }
+    }
+
+})();
